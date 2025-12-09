@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HAPP Import</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 30px; background: #1e1e1e; color: #fff; }
+    .loader { width: 30px; height: 30px; border: 3px solid #444; border-top: 3px solid #007aff; border-radius: 50%; margin: 20px auto; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <h2>🔄 Opening HAPPI...</h2>
+  <div class="loader"></div>
+  <p id="status">Preparing...</p>
+
+  <script>
+    // Получаем параметр ?url=...
+    const params = new URLSearchParams(window.location.search);
+    let url = params.get('url');
+
+    if (!url) {
+      document.getElementById('status').textContent = '❌ URL not provided';
+    } else {
+      // Декодируем (на случай, если %3A%2F%2F и т.п.)
+      try {
+        url = decodeURIComponent(url);
+      } catch (e) {
+        document.getElementById('status').textContent = '⚠️ Invalid URL encoding';
+      }
+
+      // Проверка: чтобы не открывать случайные http(s)://
+      if (url.startsWith('happ://')) {
+        document.getElementById('status').textContent = 'Launching app...';
+        
+        // 🔁 Попытка открыть приложение
+        window.location.href = url;
+
+        // ⏱ Через 2 сек — fallback (на случай блокировки)
+        setTimeout(() => {
+          if (document.hidden || document.visibilityState === 'hidden') {
+            // Пользователь ушёл в приложение → всё ок
+            return;
+          }
+          document.body.innerHTML = `
+            <h2>❌ Could not open HAPPI</h2>
+            <p>Make sure HAPPI is installed.</p>
+            <button onclick="window.location.href='${url.replace(/'/g, "\\'")}'"
+              style="background:#007aff; color:white; border:none; padding:12px 24px; font-size:16px; border-radius:8px; cursor:pointer;">
+              Try Again
+            </button>
+            <p style="margin-top:20px; font-size:14px; color:#aaa;">URL: <code>${url}</code></p>
+          `;
+        }, 2000);
+      } else {
+        document.getElementById('status').textContent = '⚠️ Only happ:// links are allowed';
+      }
+    }
+  </script>
+</body>
+</html>
